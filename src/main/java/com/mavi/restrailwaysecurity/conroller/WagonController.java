@@ -24,32 +24,50 @@ public class WagonController {
     @Autowired
     private WagonRepository wagonRepository;
 
-
-    // GET a single wagon by ID
-    //http://localhost:8084/api/wagons/id
+    /**
+     * GET a single wagon by ID
+     * GET http://localhost:8084/api/wagons/id
+     *
+     * @param id
+     * @return
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Wagon> getWagonById(@PathVariable Long id) {
         Optional<Wagon> wagonOptional = wagonRepository.findById(id);
         return ResponseEntity.notFound().build();
     }
 
-
-    // GET all wagons
+    /**
+     * getAllWagons()
+     * GET http://localhost:8084/api/wagons
+     *
+     * @return
+     */
     @GetMapping
-    //GET http://localhost:8084/api/wagons
     public List<Wagon> getAllWagons() {
         return wagonRepository.findAll();
     }
 
-    // CREATE a new wagon
-    // POST http://localhost:8084/api/wagons
+    /**
+     * CREATE a new wagon
+     * POST http://localhost:8084/api/wagons
+     *
+     * @param wagon
+     * @return
+     */
     @PostMapping
     public Wagon createWagon(@Valid @RequestBody Wagon wagon) {
         return wagonRepository.save(wagon);
     }
 
-    // UPDATE an existing wagon by ID
-    //PUT http://localhost:8084/api/wagons/id
+    /**
+     * UPDATE an existing wagon by ID
+     * PUT http://localhost:8084/api/wagons/id
+     *
+     * @param id
+     * @param updatedWagon
+     * @return
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Wagon> updateWagon(@PathVariable Long id, @RequestBody Wagon updatedWagon) {
         Optional<Wagon> wagonOptional = wagonRepository.findById(id);
@@ -66,9 +84,13 @@ public class WagonController {
         }
     }
 
-
-    // DELETE an existing wagon by ID
-    //    http://localhost:8084/wagons/id
+    /**
+     * DELETE an existing wagon by ID
+     * DELETE http://localhost:8084/wagons/id
+     *
+     * @param id
+     * @return
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWagon(@PathVariable Long id) {
         Optional<Wagon> wagonOptional = wagonRepository.findById(id);
@@ -80,8 +102,12 @@ public class WagonController {
         }
     }
 
-    // DELETE all wagons
-    //    http://localhost:8084/wagons
+    /**
+     * DELETE all wagons
+     * DELETE http://localhost:8084/wagons
+     *
+     * @return
+     */
     @DeleteMapping
     public ResponseEntity<Void> deleteAllWagons() {
         wagonRepository.deleteAll();
