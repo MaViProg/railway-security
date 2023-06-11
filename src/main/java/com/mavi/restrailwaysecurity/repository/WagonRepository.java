@@ -13,15 +13,11 @@ public interface WagonRepository extends JpaRepository<Wagon, Long> {
 
     Wagon findTopByStationTrackOrderByPositionDesc(StationTrack stationTrack);
 
-    Wagon findTopByStationTrackOrderByPositionAsc(StationTrack stationTrack);
-
     Wagon findTopByWaybillOrderByPositionAsc(Waybill waybill);
 
     void deleteAllByWaybill(Waybill waybill);
 
-    List<Wagon> findByWaybillOrderByPositionAsc(Waybill waybill);
+    List<Wagon> findAllByWaybillOrderByPositionAsc(Waybill waybill);
 
-    List<Wagon> findByStationTrackOrderByPositionAsc(StationTrack stationTrack);
 }
-
 
