@@ -1,22 +1,34 @@
 package com.mavi.restrailwaysecurity.conroller;
 
+import com.mavi.restrailwaysecurity.dto.CreateWaybillRequestDto;
+import com.mavi.restrailwaysecurity.dto.CreateWaybillResponseDto;
+import com.mavi.restrailwaysecurity.dto.UpdateWaybillDto;
+import com.mavi.restrailwaysecurity.entity.Cargo;
 import com.mavi.restrailwaysecurity.entity.Waybill;
 import com.mavi.restrailwaysecurity.repository.WaybillRepository;
+import com.mavi.restrailwaysecurity.service.WagonService;
+import com.mavi.restrailwaysecurity.service.WaybillService;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/waybills")
 public class WaybillController {
 
-    private final WaybillRepository repository;
+    @Autowired
+    private WaybillRepository waybillRepository;
 
-    public WaybillController(WaybillRepository repository) {
-        this.repository = repository;
-    }
+    @Autowired
+    WaybillService waybillService;
+
+    @Autowired
+    WagonService wagonService;
+
 
     /**
      * getAllWaybills()
@@ -26,7 +38,7 @@ public class WaybillController {
      */
     @GetMapping
     public List<Waybill> getAllWaybills() {
-        return repository.findAll();
+        return waybillRepository.findAll();
     }
 
     /**
@@ -38,43 +50,70 @@ public class WaybillController {
      */
     @GetMapping("/{id}")
     public Waybill getWaybillById(@PathVariable Long id) {
-        return repository.findById(id)
+        return waybillRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Waybill not found with id " + id));
     }
 
     /**
      * createWaybill()
-     * POST http://localhost:8084/api/waybills
+     * POST http://localhost:8083/api/waybills
      *
-     * @param waybill
+     * @param
      * @return
      */
     @PostMapping
-    public Waybill createWaybill(@RequestBody Waybill waybill) {
-        return repository.save(waybill);
+    public CreateWaybillResponseDto createWaybill(@RequestBody CreateWaybillRequestDto createWaybillRequestDto) {
+
+        Waybill waybill = new Waybill();
+
+        //берем вес у DTO и присваиваем его сущности
+        waybill.setCargoWeight(createWaybillRequestDto.getCargoWeight());
+        waybill.setWagonWeight(createWaybillRequestDto.getWagonWeight());
+        waybill.setSerialNumber(createWaybillRequestDto.getSerialNumber());
+        waybill.setWagonNumber(createWaybillRequestDto.getWagonNumber());
+
+        Cargo cargo = new Cargo();
+
+        cargo.setId(createWaybillRequestDto.getCargoId());
+        waybill.setCargo(cargo);
+
+        Waybill waybill2 = waybillService.createWaybill(waybill);
+        CreateWaybillResponseDto createWaybillResponseDto = new CreateWaybillResponseDto();
+        createWaybillResponseDto.setCargoWeight(waybill2.getCargoWeight());
+        createWaybillResponseDto.setWagonWeight(waybill2.getWagonWeight());
+        createWaybillResponseDto.setSerialNumber(waybill2.getSerialNumber());
+        createWaybillResponseDto.setWagonNumber(waybill2.getWagonNumber());
+        createWaybillResponseDto.setCargoId(waybill2.getCargo().getId());
+        createWaybillResponseDto.setId(waybill2.getId());
+
+        return createWaybillResponseDto;
     }
+
 
     /**
      * updateWaybill()
      * PUT http://localhost:8084/api/waybills/id
      *
-     * @param newWaybill
+     * @param
      * @param id
      * @return
      */
     @PutMapping("/{id}")
-    public Waybill updateWaybill(@RequestBody Waybill newWaybill, @PathVariable Long id) {
-        return repository.findById(id)
-                .map(waybill -> {
-                    waybill.setCargo(newWaybill.getCargo());
-                    waybill.setCargoWeight(newWaybill.getCargoWeight());
-                    waybill.setWagonWeight(newWaybill.getWagonWeight());
-                    return repository.save(waybill);
-                })
-                .orElseGet(() -> {
-                    newWaybill.setId(id);
-                    return repository.save(newWaybill);
-                });
+    public Waybill updateWaybill(@RequestBody UpdateWaybillDto updateWaybillDto,
+                                 @PathVariable Long id) {
+
+        Waybill waybill = new Waybill();
+        waybill.setId(id);
+        waybill.setCargoWeight(updateWaybillDto.getCargoWeight());
+        waybill.setWagonWeight(updateWaybillDto.getWagonWeight());
+        waybill.setSerialNumber(updateWaybillDto.getSerialNumber());
+        waybill.setWagonNumber(updateWaybillDto.getWagonNumber());
+
+        Cargo cargo = new Cargo();
+        cargo.setId(updateWaybillDto.getCargoId());
+
+        waybill.setCargo(cargo);
+        return waybillRepository.save(waybill);
     }
 
     /**
@@ -85,19 +124,11 @@ public class WaybillController {
      */
     @DeleteMapping("/{id}")
     public void deleteWaybill(@PathVariable Long id) {
-        repository.deleteById(id);
+        waybillRepository.deleteById(id);
     }
 
-    /**
-     * deleteAllWaybills()
-     * DELETE http://localhost:8084/api/waybills
-     *
-     * @return
-     */
-    @DeleteMapping
-    public ResponseEntity<Void> deleteAllWaybills() {
-        repository.deleteAll();
-        return ResponseEntity.noContent().build();
-    }
 }
+
+
+
 

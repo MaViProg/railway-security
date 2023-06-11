@@ -24,13 +24,14 @@ public class WagonService {
     private WaybillRepository waybillRepository;
 
     /**
-     * Method receiveWagons:
-     * Receives a list of wagons and a stationTrackId parameter,
-     * and adds the wagons to the end of the train on the specified station track.
-     * @param wagons
+     Операция приема вагонов на предприятие.
+     На входе список вагонов с учетом на какой путь станции данные вагоны принимаются.
+     Вагоны могут приниматься только в конец состава.
+     * @param
      * @param stationTrackId
      */
-    public void receiveWagons(List<Wagon> wagons, Long stationTrackId) {
+    public void receiveWagons(List<Long> wagonsId, Long stationTrackId) {
+
         StationTrack stationTrack = stationTrackRepository.findById(stationTrackId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid station track ID"));
 
@@ -39,7 +40,7 @@ public class WagonService {
         int position = lastWagon != null ? lastWagon.getPosition() + 1 : 0;
 
         // Add wagons to the end of the train
-        for (Wagon wagon : wagons) {
+        for (Wagon wagon : wagonRepository.findAllById(wagonsId)) {
             wagon.setStationTrack(stationTrack);
             wagon.setPosition(position++);
             wagonRepository.save(wagon);
@@ -47,34 +48,44 @@ public class WagonService {
     }
 
     /**
-     * Method moveWagons:
-     * Receives a list of wagons and a stationTrackId parameter,
-     * and moves the wagons to the beginning or end of the train on the specified station track.
+     * Операция перестановки вагонов внутри станции.
+     * На входе список вагонов и путь на который они будут перемещены.
+     * Вагоны могут быть перемещены только в начало или конец состава.
+     *
+     * http://localhost:8083/api/wagons/move
      * @param wagons
      * @param stationTrackId
      */
-    public void moveWagons(List<Wagon> wagons, Long stationTrackId) {
-        StationTrack stationTrack = stationTrackRepository.findById(stationTrackId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid station track ID"));
-
-        // Check if wagons can be moved to the beginning or end of the train
-        Wagon firstWagon = wagonRepository.findTopByStationTrackOrderByPositionAsc(stationTrack);
-        Wagon lastWagon = wagonRepository.findTopByStationTrackOrderByPositionDesc(stationTrack);
-        int position = firstWagon != null ? firstWagon.getPosition() - 1 : 0;
-
-        // Move wagons to the beginning or end of the train
-        for (Wagon wagon : wagons) {
-            wagon.setStationTrack(stationTrack);
-            wagon.setPosition(position--);
-            wagonRepository.save(wagon);
-        }
-    }
+//    public void moveWagons(List<Long> wagons, Long stationTrackId, WagonMovePosition position) {
+//        StationTrack stationTrack = stationTrackRepository.findById(stationTrackId)
+//                .orElseThrow(() -> new IllegalArgumentException("Invalid station track ID"));
+//
+//        Wagon firstWagon = stationTrack.getWagons().get(0);
+//        Wagon lastWagon = stationTrack.getWagons().get(stationTrack.getWagons().size()-1);
+//
+//        int position =
+//
+//        for (Wagon wagon : wagonRepository.findAllById(wagons)) {
+//            if (wagon == null || wagon.getNumber() == null || wagon.getNumber().isEmpty()) {
+//                throw new IllegalArgumentException("Wagon number cannot be null or empty");
+//            }
+//            if (wagon.getType() == null || wagon.getType().isEmpty()) {
+//                throw new IllegalArgumentException("Wagon type cannot be null or empty");
+//            }
+//            wagon.setStationTrack(stationTrack);
+//            wagon.setPosition(position--);
+//            wagonRepository.save(wagon);
+//        }
+//    }
 
     /**
-     * Method departWagons:
-     * Receives a waybillId parameter, and removes all wagons from the beginning of the train in the specified waybill.
+     * Операция убытия вагонов на сеть РЖД.
+     * Вагоны могут убывать только с начала состава.
+     *
+     *
      * @param waybillId
      */
+
     public void departWagons(Long waybillId) {
         Waybill waybill = waybillRepository.findById(waybillId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid waybill ID"));
@@ -86,6 +97,14 @@ public class WagonService {
         }
 
         // Remove wagons from the beginning of the train
+        List<Wagon> wagons = wagonRepository.findAllByWaybillOrderByPositionAsc(waybill);
+        for (Wagon wagon : wagons) {
+            if (wagon.getStationTrack() == null) {
+                throw new IllegalStateException("Wagon " + wagon.getNumber() + " does not have a station track");
+            }
+        }
         wagonRepository.deleteAllByWaybill(waybill);
     }
+
+
 }
