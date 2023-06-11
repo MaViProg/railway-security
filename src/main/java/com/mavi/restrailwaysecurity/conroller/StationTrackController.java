@@ -1,21 +1,34 @@
 package com.mavi.restrailwaysecurity.conroller;
 
+import com.mavi.restrailwaysecurity.dto.CreateStationTrackRequestDTO;
+import com.mavi.restrailwaysecurity.dto.CreateStationTrackResponseDTO;
+import com.mavi.restrailwaysecurity.dto.UpdateStationTrackDTO;
+import com.mavi.restrailwaysecurity.entity.StationModel;
 import com.mavi.restrailwaysecurity.entity.StationTrack;
+import com.mavi.restrailwaysecurity.entity.Wagon;
+import com.mavi.restrailwaysecurity.exceptions.EntityNotFoundException;
+import com.mavi.restrailwaysecurity.repository.StationModelRepository;
 import com.mavi.restrailwaysecurity.repository.StationTrackRepository;
+import com.mavi.restrailwaysecurity.service.StationTrackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/station-tracks")
-//@ComponentScan("com.example.demo")
 public class StationTrackController {
 
     @Autowired
     private StationTrackRepository stationTrackRepository;
+
+    @Autowired
+    StationModelRepository stationModelRepository;
+
+    @Autowired
+    StationTrackService stationTrackService;
+
 
     /**
      * getStationTracksById()
@@ -26,7 +39,8 @@ public class StationTrackController {
      */
     @GetMapping("/{id}")
     public StationTrack getStationTrackById(@PathVariable Long id) {
-        return stationTrackRepository.findById(id).orElse(null);
+        return stationTrackRepository.findById(id).orElseThrow(() ->
+                new EntityNotFoundException("Waybill not found with id " + id));
     }
 
     /**
@@ -38,39 +52,71 @@ public class StationTrackController {
      */
     @GetMapping
     public List<StationTrack> getAllStationTracks() {
-        Iterable<StationTrack> stationTracks = stationTrackRepository.findAll();
-        List<StationTrack> list = new ArrayList<>();
-        for (StationTrack stationTrack : stationTracks) {
-            list.add(stationTrack);
-        }
-        return list;
+        return stationTrackRepository.findAll();
     }
 
     /**
-     * createStationTrack()
-     * POST http://localhost:8084/api/station-tracks
      *
      * @param stationTrack
      * @return
      */
-    @PostMapping
-    public StationTrack createStationTrack(@RequestBody StationTrack stationTrack) {
-        return stationTrackRepository.save(stationTrack);
-    }
 
     /**
+     * ERROR
+     * createStationTrack()
+     * POST http://localhost:8084/api/station-tracks
+     *
+     * @param
+     * @return успешный ответ с созданной записью StationTrack
+     */
+
+    //deserelization from DTO to Entity
+    @PostMapping
+    public CreateStationTrackResponseDTO createStationTrack(@RequestBody CreateStationTrackRequestDTO createStationTrackRequestDTO) {
+        StationTrack stationTrack = new StationTrack();
+
+        //берем вес у DTO и присваиваем его сущности
+        stationTrack.setName(createStationTrackRequestDTO.getName());
+        //TODO Rename stationTrack to Wagons
+        stationTrack.setWagons(createStationTrackRequestDTO.getStationTrack());
+
+        Wagon wagon = new Wagon();
+        wagon.setId(createStationTrackRequestDTO.getStationModelId());
+
+        StationTrack stationTrack2 = stationTrackService.createStationTrack(stationTrack);
+        CreateStationTrackResponseDTO createStationTrackResponseDTO = new CreateStationTrackResponseDTO();
+        createStationTrackResponseDTO.setName(stationTrack2.getName());
+        createStationTrackResponseDTO.setId(stationTrack2.getId());
+        createStationTrackResponseDTO.setStationModelId(stationTrack2.getStationModel().getId());
+        return createStationTrackResponseDTO;
+
+    }
+
+
+    /**
+     * Обновила этот метод!
      * updateStationTrack
      * PUT http://localhost:8084/api/station-tracks/id
      *
      * @param id
-     * @param stationTrack
+     * @param
      * @return
      */
+    //TODO Какой точно запрос в Postman?
     @PutMapping("/{id}")
-    public StationTrack updateStationTrack(@PathVariable Long id, @RequestBody StationTrack stationTrack) {
-        stationTrack.setId(id);
-        return stationTrackRepository.save(stationTrack);
+    public StationTrack updateStationTrack(@RequestBody UpdateStationTrackDTO stationTrackDTO, @PathVariable Long id) {
+        StationTrack updateStationTrack = new StationTrack();
+        updateStationTrack.setId(id);
+        updateStationTrack.setName(stationTrackDTO.getName());
+        StationModel stationModel = new StationModel();
+        stationModel.setId(stationTrackDTO.getStationModelId());
+
+        updateStationTrack.setStationModel(stationModel);
+
+        return stationTrackRepository.save(updateStationTrack);
+
     }
+
 
     /**
      * deleteStationTrack()
@@ -86,6 +132,7 @@ public class StationTrackController {
     /**
      * deleteAllStationTracks()
      * DELETE http://localhost:8084/api/station-tracks
+     *
      * @return
      */
     @DeleteMapping
