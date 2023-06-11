@@ -84,15 +84,4 @@ public class CargoController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * deleteAllCargos()
-     * DELETE ALL http://localhost:8084/api/cargos
-     *
-     * @return
-     */
-    @DeleteMapping
-    public ResponseEntity<Void> deleteAllCargos() {
-        cargoRepository.deleteAll();
-        return ResponseEntity.noContent().build();
-    }
 }

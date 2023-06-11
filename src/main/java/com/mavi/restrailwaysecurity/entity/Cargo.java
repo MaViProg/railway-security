@@ -1,5 +1,8 @@
 package com.mavi.restrailwaysecurity.entity;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -16,6 +19,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = Long.class)
 public class Cargo {
 
     @Id
@@ -35,5 +39,8 @@ public class Cargo {
         this.name = name;
     }
 
+    @JsonIdentityReference(alwaysAsId = true)
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "cargo")
+    private Waybill waybill;
 }
 
